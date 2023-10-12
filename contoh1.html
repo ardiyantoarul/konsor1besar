@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Input Parameter Tambak Udang</title>
+    <script src="https://apis.google.com/js/api.js"></script>
+</head>
+<body>
+
+    <h2>Input Parameter Tambak Udang</h2>
+
+    <form id="inputForm">
+        <label for="warnaAir">Warna Air:</label>
+        <input type="text" id="warnaAir" name="warnaAir" pattern="[A-Za-z]+" title="Hanya huruf diperbolehkan" required>
+
+        <label for="ketinggianAir">Ketinggian Air:</label>
+        <input type="text" id="ketinggianAir" name="ketinggianAir" pattern="[0-9]+" title="Hanya angka diperbolehkan" required>
+
+        <label for="salinitas">Salinitas:</label>
+        <input type="text" id="salinitas" name="salinitas" pattern="[0-9]+" title="Hanya angka diperbolehkan, maksimal 100" required>
+
+        <label for="phAir">pH Air:</label>
+        <input type="text" id="phAir" name="phAir" pattern="[0-9]+(\.[0-9]+)?" title="Hanya angka diperbolehkan, maksimal 14" required>
+
+        <label for="ukuranIkan">Ukuran Ikan:</label>
+        <input type="text" id="ukuranIkan" name="ukuranIkan" pattern="[0-9]*" title="Hanya angka diperbolehkan">
+
+        <button type="button" onclick="submitData()">Submit Data</button>
+    </form>
+
+    <script>
+        // Load Google Sheets API
+        gapi.load('client', initClient);
+
+        // API key dari proyek Google Cloud Console Anda
+        const apiKey = 'AIzaSyCozmh9y8X8Hkkviy2LbBINuPCi9zetw6M';
+
+        // ID Spreadsheet Google Sheets Anda
+        const spreadsheetId = '1A3qKP6FKnOE7QPufy98637hSk7Sy6PJ2vG9GQNXJclI';
+
+        function initClient() {
+            gapi.client.init({
+                apiKey: apiKey,
+                discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
+            }).then(function () {
+                console.log('Google Sheets API client initialized');
+            }, function (error) {
+                console.log('Error initializing Google Sheets API client: ' + error);
+            });
+        }
+
+        // Fungsi untuk mendapatkan waktu dan tanggal sekarang
+        function getCurrentDateTime() {
+            const now = new Date();
+            const date = now.toISOString().split('T')[0];
+            const time = now.toLocaleTimeString();
+            return { date, time };
+        }
+
+        // Fungsi untuk menambahkan data ke Google Sheets
+        function submitData() {
+            // Ambil nilai dari formulir
+            const warnaAir = document.getElementById('warnaAir').value;
+            const ketinggianAir = document.getElementById('ketinggianAir').value;
+            const salinitas = document.getElementById('salinitas').value;
+            const phAir = document.getElementById('phAir').value;
+            const ukuranIkan = document.getElementById('ukuranIkan').value;
+
+            // Validasi input
+            if (!isOnlyLetters(warnaAir) || !isOnlyNumbers(ketinggianAir) || !isOnlyNumbers(salinitas) || !isOnlyNumbers(phAir)) {
+                alert('Input tidak valid. Pastikan warna air adalah huruf, dan parameter lainnya adalah angka.');
+                return;
+            }
+
+            // Validasi khusus untuk Salinitas dan pH Air
+            if (parseInt(salinitas) > 100 || parseFloat(phAir) > 14) {
+                alert('Input tidak valid. Salinitas maksimal 100 dan pH maksimal 14.');
+                return;
+            }
+
+            // Mendapatkan waktu dan tanggal sekarang
+            const { date, time } = getCurrentDateTime();
+
+            // Mengirim data ke Google Sheets
+            gapi.client.sheets.spreadsheets.values.append({
+                spreadsheetId: spreadsheetId,
+                range: 'Sheet1',  // Sesuaikan dengan nama sheet Anda
+                valueInputOption: 'RAW',
+                resource: {
+                    values: [[date, time, warnaAir, ketinggianAir, salinitas, phAir, ukuranIkan]]
+                }
+            }).then(function (response) {
+                console.log('Data appended: ', response);
+                alert('Data berhasil ditambahkan ke Google Sheets.');
+            }, function (error) {
+                console.error('Error appending data: ', error);
+                alert('Terjadi kesalahan. Data tidak dapat ditambahkan.');
+            });
+        }
+
+        // Fungsi untuk memastikan input hanya huruf
+        function isOnlyLetters(value) {
+            return /^[A-Za-z]+$/.test(value);
+        }
+
+        // Fungsi untuk memastikan input hanya angka
+        function isOnlyNumbers(value) {
+            return /^[0-9]+(\.[0-9]+)?$/.test(value);
+        }
+    </script>
+</body>
+</html>
