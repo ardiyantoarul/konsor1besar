@@ -3,30 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tabel Tambak Udang</title>
+    <title>Input Nama dan Usia</title>
     <script src="https://apis.google.com/js/api.js"></script>
     <style>
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-
-        th {
-            background-color: #f2f2f2;
-        }
-
-        caption {
-            font-size: 1.2em;
-            margin-bottom: 10px;
-        }
-
         form {
             margin-top: 20px;
         }
@@ -34,44 +13,17 @@
 </head>
 <body>
 
-    <h2>Tabel Tambak Udang</h2>
+    <h2>Input Nama dan Usia</h2>
 
-    <form id="updateForm">
-        <label for="warnaAir">Warna Air:</label>
-        <input type="text" id="warnaAir" name="warnaAir" pattern="[A-Za-z]+" title="Hanya huruf diperbolehkan" required>
+    <form id="inputForm">
+        <label for="nama">Nama:</label>
+        <input type="text" id="nama" name="nama" required>
 
-        <label for="ketinggianAir">Ketinggian Air:</label>
-        <input type="text" id="ketinggianAir" name="ketinggianAir" pattern="[0-9]+" title="Hanya angka diperbolehkan" required>
+        <label for="usia">Usia:</label>
+        <input type="number" id="usia" name="usia" required>
 
-        <label for="salinitas">Salinitas:</label>
-        <input type="text" id="salinitas" name="salinitas" pattern="[0-9]+" title="Hanya angka diperbolehkan, maksimal 100" required>
-
-        <label for="phAir">pH Air:</label>
-        <input type="text" id="phAir" name="phAir" pattern="[0-9]+(\.[0-9]+)?" title="Hanya angka diperbolehkan, maksimal 14" required>
-
-        <label for="ukuranIkan">Ukuran Ikan:</label>
-        <input type="text" id="ukuranIkan" name="ukuranIkan" pattern="[0-9]*" title="Hanya angka diperbolehkan">
-
-        <button type="button" onclick="submitData()">Update Data</button>
+        <button type="button" onclick="submitData()">Submit</button>
     </form>
-
-    <table>
-        <caption>Parameter Tambak Udang</caption>
-        <thead>
-            <tr>
-                <th>Tanggal</th>
-                <th>Jam</th>
-                <th>Warna Air</th>
-                <th>Ketinggian Air</th>
-                <th>Salinitas</th>
-                <th>pH Air</th>
-                <th>Ukuran Ikan</th>
-            </tr>
-        </thead>
-        <tbody id="tambakTableBody">
-            <!-- Data akan ditambahkan melalui JavaScript -->
-        </tbody>
-    </table>
 
     <script>
         let sheetsApi;
@@ -106,7 +58,7 @@
         }
 
         // Fungsi untuk menambahkan baris baru ke Google Sheets
-        function addRowToSheet(warnaAir, ketinggianAir, salinitas, phAir, ukuranIkan) {
+        function addRowToSheet(nama, usia) {
             if (!sheetsApi) {
                 console.error('Google Sheets API not initialized');
                 return;
@@ -115,7 +67,7 @@
             const { date, time } = getCurrentDateTime();
 
             const values = [
-                [date, time, warnaAir, ketinggianAir, salinitas, phAir, ukuranIkan]
+                [date, time, nama, usia]
             ];
 
             sheetsApi.spreadsheets.values.append({
@@ -132,60 +84,23 @@
             });
         }
 
-        // Fungsi untuk menambahkan baris baru ke tabel di HTML
-        function addRow(warnaAir, ketinggianAir, salinitas, phAir, ukuranIkan) {
-            const tambakTableBody = document.getElementById('tambakTableBody');
-            const { date, time } = getCurrentDateTime();
-            const newRow = document.createElement('tr');
-            newRow.innerHTML = `
-                <td>${date}</td>
-                <td>${time}</td>
-                <td><strong>${warnaAir}</strong></td>
-                <td><strong>${ketinggianAir}</strong></td>
-                <td><strong>${salinitas}</strong></td>
-                <td><strong>${phAir}</strong></td>
-                <td><strong>${ukuranIkan !== '' ? ukuranIkan : '-'}</strong></td>
-            `;
-            tambakTableBody.prepend(newRow);
-        }
-
-        // Fungsi untuk mengupdate data parameter
+        // Fungsi untuk menangani pengiriman data
         function submitData() {
             // Ambil nilai dari formulir
-            const warnaAir = document.getElementById('warnaAir').value;
-            const ketinggianAir = document.getElementById('ketinggianAir').value;
-            const salinitas = document.getElementById('salinitas').value;
-            const phAir = document.getElementById('phAir').value;
-            const ukuranIkan = document.getElementById('ukuranIkan').value;
+            const nama = document.getElementById('nama').value;
+            const usia = document.getElementById('usia').value;
 
             // Validasi input
-            if (!isOnlyLetters(warnaAir) || !isOnlyNumbers(ketinggianAir) || !isOnlyNumbers(salinitas) || !isOnlyNumbers(phAir)) {
-                alert('Input tidak valid. Pastikan warna air adalah huruf, dan parameter lainnya adalah angka.');
+            if (!nama || !usia || isNaN(usia)) {
+                alert('Input tidak valid. Pastikan semua field diisi dan usia berupa angka.');
                 return;
             }
 
-            // Validasi khusus untuk Salinitas dan pH Air
-            if (parseInt(salinitas) > 100 || parseFloat(phAir) > 14) {
-                alert('Input tidak valid. Salinitas maksimal 100 dan pH maksimal 14.');
-                return;
-            }
-
-            // Tambahkan data baru ke Google Sheets dan tabel HTML
-            addRowToSheet(warnaAir, ketinggianAir, salinitas, phAir, ukuranIkan);
-            addRow(warnaAir, ketinggianAir, salinitas, phAir, ukuranIkan);
+            // Tambahkan data baru ke Google Sheets
+            addRowToSheet(nama, usia);
 
             // Reset formulir
-            document.getElementById('updateForm').reset();
-        }
-
-        // Fungsi untuk memastikan input hanya huruf
-        function isOnlyLetters(value) {
-            return /^[A-Za-z]+$/.test(value);
-        }
-
-        // Fungsi untuk memastikan input hanya angka
-        function isOnlyNumbers(value) {
-            return /^[0-9]+(\.[0-9]+)?$/.test(value);
+            document.getElementById('inputForm').reset();
         }
     </script>
 </body>
