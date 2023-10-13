@@ -3,32 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google Sheets Integration</title>
+    <title>Tabel Tambak Udang</title>
     <script src="https://apis.google.com/js/api.js"></script>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        caption {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        form {
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
 
-    <h2>Formulir Pengguna</h2>
+    <h2>Tabel Tambak Udang</h2>
 
-    <form id="userDataForm">
-        <label for="name">Nama:</label>
-        <input type="text" id="name" name="name" required>
+    <form id="updateForm">
+        <label for="warnaAir">Warna Air:</label>
+        <input type="text" id="warnaAir" name="warnaAir" pattern="[A-Za-z]+" title="Hanya huruf diperbolehkan" required>
 
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required>
+        <label for="ketinggianAir">Ketinggian Air:</label>
+        <input type="text" id="ketinggianAir" name="ketinggianAir" pattern="[0-9]+" title="Hanya angka diperbolehkan" required>
 
-        <button type="button" onclick="submitUserData()">Submit</button>
+        <label for="salinitas">Salinitas:</label>
+        <input type="text" id="salinitas" name="salinitas" pattern="[0-9]+" title="Hanya angka diperbolehkan, maksimal 100" required>
+
+        <label for="phAir">pH Air:</label>
+        <input type="text" id="phAir" name="phAir" pattern="[0-9]+(\.[0-9]+)?" title="Hanya angka diperbolehkan, maksimal 14" required>
+
+        <label for="ukuranIkan">Ukuran Ikan:</label>
+        <input type="text" id="ukuranIkan" name="ukuranIkan" pattern="[0-9]*" title="Hanya angka diperbolehkan">
+
+        <button type="button" onclick="submitData()">Update Data</button>
     </form>
 
+    <table>
+        <caption>Parameter Tambak Udang</caption>
+        <thead>
+            <tr>
+                <th>Tanggal</th>
+                <th>Jam</th>
+                <th>Warna Air</th>
+                <th>Ketinggian Air</th>
+                <th>Salinitas</th>
+                <th>pH Air</th>
+                <th>Ukuran Ikan</th>
+            </tr>
+        </thead>
+        <tbody id="tambakTableBody">
+            <!-- Data akan ditambahkan melalui JavaScript -->
+        </tbody>
+    </table>
+
     <script>
+        let sheetsApi;
+
         // Load Google Sheets API
         gapi.load('client', initClient);
 
         // API key dari proyek Google Cloud Console Anda
-        const apiKey = 'AIzaSyDouwud_w9P8fnsOWtkXmnvO8URkZkwKag';
+        const apiKey = 'AIzaSyAmDXqbVlwjUPuunkUR2T3xiSJxrup6Ivk';
 
         // ID Spreadsheet Google Sheets Anda
-        const spreadsheetId = '1wv0fXP89Qz8xJcXwZCayZWnbXa0sV1COWicS0pyjUNw';
+        const spreadsheetId = '1yCmVbLzmCWDZ7F_qKJmd-_qdXKWiS6Vne4MpnA37q8A';
 
         function initClient() {
             gapi.client.init({
@@ -36,43 +91,102 @@
                 discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
             }).then(function () {
                 console.log('Google Sheets API client initialized');
+                sheetsApi = gapi.client.sheets;
             }, function (error) {
                 console.log('Error initializing Google Sheets API client: ' + error);
             });
         }
 
-        function submitUserData() {
-            const name = document.getElementById('name').value;
-            const email = document.getElementById('email').value;
+        // Fungsi untuk mendapatkan waktu dan tanggal sekarang
+        function getCurrentDateTime() {
+            const now = new Date();
+            const date = now.toISOString().split('T')[0];
+            const time = now.toLocaleTimeString();
+            return { date, time };
+        }
 
-            // Pastikan ada data yang dimasukkan
-            if (!name || !email) {
-                alert('Mohon isi semua field.');
+        // Fungsi untuk menambahkan baris baru ke Google Sheets
+        function addRowToSheet(warnaAir, ketinggianAir, salinitas, phAir, ukuranIkan) {
+            if (!sheetsApi) {
+                console.error('Google Sheets API not initialized');
                 return;
             }
 
-            // Lakukan operasi Google Sheets API untuk menyimpan data
+            const { date, time } = getCurrentDateTime();
+
             const values = [
-                [name, email]
+                [date, time, warnaAir, ketinggianAir, salinitas, phAir, ukuranIkan]
             ];
 
-            gapi.client.sheets.spreadsheets.values.append({
+            sheetsApi.spreadsheets.values.append({
                 spreadsheetId: spreadsheetId,
-                range: 'Sheet1',
+                range: 'Sheet1',  // Sesuaikan dengan nama sheet Anda
                 valueInputOption: 'RAW',
                 resource: {
                     values: values
                 }
             }).then(function (response) {
                 console.log('Data appended: ', response);
-
-                // Reset formulir setelah berhasil mengirim
-                document.getElementById('userDataForm').reset();
             }, function (error) {
                 console.error('Error appending data: ', error);
             });
         }
-    </script>
 
+        // Fungsi untuk menambahkan baris baru ke tabel di HTML
+        function addRow(warnaAir, ketinggianAir, salinitas, phAir, ukuranIkan) {
+            const tambakTableBody = document.getElementById('tambakTableBody');
+            const { date, time } = getCurrentDateTime();
+            const newRow = document.createElement('tr');
+            newRow.innerHTML = `
+                <td>${date}</td>
+                <td>${time}</td>
+                <td><strong>${warnaAir}</strong></td>
+                <td><strong>${ketinggianAir}</strong></td>
+                <td><strong>${salinitas}</strong></td>
+                <td><strong>${phAir}</strong></td>
+                <td><strong>${ukuranIkan !== '' ? ukuranIkan : '-'}</strong></td>
+            `;
+            tambakTableBody.prepend(newRow);
+        }
+
+        // Fungsi untuk mengupdate data parameter
+        function submitData() {
+            // Ambil nilai dari formulir
+            const warnaAir = document.getElementById('warnaAir').value;
+            const ketinggianAir = document.getElementById('ketinggianAir').value;
+            const salinitas = document.getElementById('salinitas').value;
+            const phAir = document.getElementById('phAir').value;
+            const ukuranIkan = document.getElementById('ukuranIkan').value;
+
+            // Validasi input
+            if (!isOnlyLetters(warnaAir) || !isOnlyNumbers(ketinggianAir) || !isOnlyNumbers(salinitas) || !isOnlyNumbers(phAir)) {
+                alert('Input tidak valid. Pastikan warna air adalah huruf, dan parameter lainnya adalah angka.');
+                return;
+            }
+
+            // Validasi khusus untuk Salinitas dan pH Air
+            if (parseInt(salinitas) > 100 || parseFloat(phAir) > 14) {
+                alert('Input tidak valid. Salinitas maksimal 100 dan pH maksimal 14.');
+                return;
+            }
+
+            // Tambahkan data baru ke Google Sheets dan tabel HTML
+            addRowToSheet(warnaAir, ketinggianAir, salinitas, phAir, ukuranIkan);
+            addRow(warnaAir, ketinggianAir, salinitas, phAir, ukuranIkan);
+
+            // Reset formulir
+            document.getElementById('updateForm').reset();
+        }
+
+        // Fungsi untuk memastikan input hanya huruf
+        function isOnlyLetters(value) {
+            return /^[A-Za-z]+$/.test(value);
+        }
+
+        // Fungsi untuk memastikan input hanya angka
+        function isOnlyNumbers(value) {
+            return /^[0-9]+(\.[0-9]+)?$/.test(value);
+        }
+    </script>
 </body>
 </html>
