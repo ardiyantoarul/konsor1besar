@@ -8,15 +8,27 @@
 </head>
 <body>
 
+    <h2>Formulir Pengguna</h2>
+
+    <form id="userDataForm">
+        <label for="name">Nama:</label>
+        <input type="text" id="name" name="name" required>
+
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required>
+
+        <button type="button" onclick="submitUserData()">Submit</button>
+    </form>
+
     <script>
         // Load Google Sheets API
         gapi.load('client', initClient);
 
         // API key dari proyek Google Cloud Console Anda
-        const apiKey = 'YOUR_API_KEY';
+        const apiKey = 'AIzaSyDouwud_w9P8fnsOWtkXmnvO8URkZkwKag';
 
         // ID Spreadsheet Google Sheets Anda
-        const spreadsheetId = 'YOUR_SPREADSHEET_ID';
+        const spreadsheetId = '1wv0fXP89Qz8xJcXwZCayZWnbXa0sV1COWicS0pyjUNw';
 
         function initClient() {
             gapi.client.init({
@@ -29,7 +41,37 @@
             });
         }
 
-        // Lakukan operasi Google Sheets API di sini
+        function submitUserData() {
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+
+            // Pastikan ada data yang dimasukkan
+            if (!name || !email) {
+                alert('Mohon isi semua field.');
+                return;
+            }
+
+            // Lakukan operasi Google Sheets API untuk menyimpan data
+            const values = [
+                [name, email]
+            ];
+
+            gapi.client.sheets.spreadsheets.values.append({
+                spreadsheetId: spreadsheetId,
+                range: 'Sheet1',
+                valueInputOption: 'RAW',
+                resource: {
+                    values: values
+                }
+            }).then(function (response) {
+                console.log('Data appended: ', response);
+
+                // Reset formulir setelah berhasil mengirim
+                document.getElementById('userDataForm').reset();
+            }, function (error) {
+                console.error('Error appending data: ', error);
+            });
+        }
     </script>
 
 </body>
